@@ -11,13 +11,12 @@
   <meta name="theme-color" content="#2563eb">
 
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html { 
-      margin: 0; 
-      padding: 0; 
-      height: 100%; 
-      width: 100%; 
+      height: 100%; width: 100%; 
       overflow: hidden;
-      background-color: #070707; 
+      background: #070707;
+      font-family: 'Segoe UI', sans-serif;
     }
     .iframe-container {
       position: absolute;
@@ -25,110 +24,155 @@
       -webkit-overflow-scrolling: touch;
       overflow-y: scroll;
     }
-    iframe { 
-      border: none; 
-      width: 100%; 
-      height: 100%; 
-      display: block; 
-    }
+    iframe { border: none; width: 100%; height: 100%; display: block; }
 
-    /* Pantalla de bienvenida solo para Android */
-    .android-screen {
+    /* Pantalla de instalación para Android (cuando NO está instalada) */
+    .install-screen {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       padding: 2rem;
       text-align: center;
       background: linear-gradient(160deg, #0a0f1e 0%, #0f1b35 50%, #071428 100%);
     }
-    .android-logo {
-      width: 110px;
-      height: 110px;
-      border-radius: 24px;
+    .install-logo {
+      width: 100px; height: 100px;
+      border-radius: 22px;
       object-fit: contain;
       background: #000;
-      padding: 12px;
-      margin-bottom: 2rem;
+      padding: 10px;
+      margin-bottom: 1.5rem;
       box-shadow: 0 8px 32px rgba(37,99,235,0.5);
     }
-    .android-title {
-      color: #fff;
-      font-size: 2rem;
-      font-weight: 800;
-      font-family: 'Segoe UI', sans-serif;
-      letter-spacing: -0.5px;
-      margin-bottom: 0.4rem;
+    .install-title {
+      color: #fff; font-size: 2rem; font-weight: 800;
+      margin-bottom: 0.3rem;
     }
-    .android-sub {
-      color: #64748b;
-      font-size: 0.95rem;
-      font-family: 'Segoe UI', sans-serif;
-      margin-bottom: 3rem;
+    .install-sub {
+      color: #64748b; font-size: 0.9rem; margin-bottom: 2.5rem;
     }
-    .btn-abrir {
-      display: inline-block;
-      background: #2563eb;
-      color: #fff;
-      font-size: 1.1rem;
-      font-weight: 700;
-      font-family: 'Segoe UI', sans-serif;
-      padding: 1rem 3rem;
-      border-radius: 50px;
-      text-decoration: none;
+    .install-steps {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: left;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 2rem;
+    }
+    .install-steps h3 {
+      color: #2563eb; font-size: 0.85rem;
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+    .step {
+      display: flex; align-items: flex-start;
+      gap: 12px; margin-bottom: 1rem; color: #cbd5e1;
+      font-size: 0.9rem; line-height: 1.4;
+    }
+    .step-num {
+      background: #2563eb; color: #fff;
+      width: 24px; height: 24px;
+      border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .btn-instalar {
+      background: #2563eb; color: #fff;
+      padding: 1rem 2.5rem; border-radius: 50px;
+      font-size: 1rem; font-weight: 700;
+      border: none; cursor: pointer;
       box-shadow: 0 8px 30px rgba(37,99,235,0.5);
-      border: none;
-      cursor: pointer;
-      letter-spacing: 0.3px;
-      -webkit-tap-highlight-color: transparent;
+      display: none; /* se muestra solo si hay prompt disponible */
     }
-    .btn-abrir:active {
-      opacity: 0.85;
-      transform: scale(0.97);
-    }
-    .android-tip {
-      color: #334155;
-      font-size: 0.78rem;
-      font-family: 'Segoe UI', sans-serif;
-      margin-top: 2rem;
-      max-width: 280px;
-      line-height: 1.6;
+    .install-tip {
+      color: #334155; font-size: 0.75rem;
+      margin-top: 1.5rem; max-width: 300px; line-height: 1.5;
     }
   </style>
 </head>
 <body>
 
-  <script>
-    var scriptUrl = "https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec?rm=minimal";
-    var isAndroid = /Android/i.test(navigator.userAgent);
+  <div id="app"></div>
 
-    if (isAndroid) {
-      // Android: botón manual para que el click del usuario evite la interceptación de Drive
-      document.body.innerHTML = `
-        <div class="android-screen">
-          <img class="android-logo" src="icono.png" alt="PRO PEOPLE"
-               onerror="this.style.display='none'">
-          <h1 class="android-title">PRO PEOPLE</h1>
-          <p class="android-sub">Portal del Empleado</p>
-          <a class="btn-abrir" href="${scriptUrl}" target="_blank" rel="noopener">
-            🚀 Ingresar a la App
-          </a>
-          <p class="android-tip">
-            ¿Primera vez? Añádela a tu pantalla de inicio desde el menú de Chrome
-            (⋮ → Añadir a pantalla de inicio) para acceso rápido.
-          </p>
-        </div>
-      `;
-    } else {
-      // iOS y PC: iframe normal como siempre
-      document.body.innerHTML = `
+  <script>
+    var scriptUrl = "https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec";
+
+    // Detectar si ya está corriendo como PWA instalada (modo standalone)
+    var esPWA = window.matchMedia('(display-mode: standalone)').matches 
+             || window.navigator.standalone === true;
+
+    var esAndroid = /Android/i.test(navigator.userAgent);
+    var esMobile  = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    var app = document.getElementById('app');
+
+    if (esPWA || !esAndroid) {
+      // ✅ Si es PWA instalada O es iOS/PC: cargar iframe directamente
+      app.innerHTML = `
         <div class="iframe-container">
           <iframe src="${scriptUrl}"
             allow="camera; microphone; display-capture; geolocation">
           </iframe>
-        </div>
-      `;
+        </div>`;
+    } else {
+      // ⚠️ Android en Chrome normal: mostrar pantalla de instalación
+      app.innerHTML = `
+        <div class="install-screen">
+          <img class="install-logo" src="icono.png" alt="PRO PEOPLE"
+               onerror="this.style.display='none'">
+          <h1 class="install-title">PRO PEOPLE</h1>
+          <p class="install-sub">Portal del Empleado</p>
+
+          <div class="install-steps">
+            <h3>📲 Instala la app (1 sola vez)</h3>
+            <div class="step">
+              <div class="step-num">1</div>
+              <span>Toca el menú de Chrome <b>⋮</b> (tres puntos arriba a la derecha)</span>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <span>Selecciona <b>"Añadir a pantalla de inicio"</b></span>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <span>Pulsa <b>"Añadir"</b> en la ventana que aparece</span>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <span>Abre la app desde el <b>ícono en tu pantalla de inicio</b> 🎉</span>
+            </div>
+          </div>
+
+          <button class="btn-instalar" id="btnInstalar">
+            ⬇️ Instalar App Ahora
+          </button>
+
+          <p class="install-tip">
+            Una vez instalada, la app se abrirá sin problemas con tu cuenta de Google y no necesitarás repetir este proceso.
+          </p>
+        </div>`;
+
+      // Si Chrome ofrece el prompt automático de instalación, mostramos el botón
+      var promptEvt;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        promptEvt = e;
+        document.getElementById('btnInstalar').style.display = 'inline-block';
+      });
+      document.getElementById('btnInstalar') && 
+        document.getElementById('btnInstalar').addEventListener('click', function() {
+          if (promptEvt) promptEvt.prompt();
+        });
+    }
+
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
     }
   </script>
 
