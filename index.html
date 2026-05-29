@@ -31,11 +31,42 @@
       height: 100%; 
       display: block; 
     }
+    /* Estilo para el mensaje temporal de redirección en móviles */
+    .redirect-msg {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      font-family: sans-serif;
+      color: #2563eb;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
   </style>
+
+  <!-- Lógica de detección y redirección antes de que cargue la página -->
+  <script>
+    var scriptUrl = "https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec";
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // Redirige directamente usando la URL del script sin dejar historial de esta página
+      window.location.replace(scriptUrl);
+    }
+  </script>
 </head>
 <body>
-  <div class="iframe-container">
-    <iframe src="https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec" allow="camera; microphone; display-capture; geolocation"></iframe>
-  </div>
+  
+  <div class="iframe-container" id="content-container"></div>
+
+  <!-- Carga el iframe solo si está en PC, en móvil muestra mensaje de carga -->
+  <script>
+    if (isMobile) {
+      document.getElementById('content-container').innerHTML = '<div class="redirect-msg">Abriendo aplicación...</div>';
+    } else {
+      document.getElementById('content-container').innerHTML = '<iframe src="' + scriptUrl + '" allow="camera; microphone; display-capture; geolocation"></iframe>';
+    }
+  </script>
+  
 </body>
 </html>
