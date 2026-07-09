@@ -16,13 +16,13 @@
       padding: 0; 
       height: 100%; 
       width: 100%; 
-      overflow: hidden; /* Evita el doble scroll */
+      overflow: hidden;
       background-color: #f8fafc; 
     }
     .iframe-container {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      -webkit-overflow-scrolling: touch; /* Suaviza el scroll en iOS */
+      -webkit-overflow-scrolling: touch;
       overflow-y: scroll;
     }
     iframe { 
@@ -35,7 +35,25 @@
 </head>
 <body>
   <div class="iframe-container">
-    <iframe src="https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec" allow="camera; microphone; display-capture; geolocation"></iframe>
+    <iframe 
+      id="app-frame"
+      src="https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec" 
+      allow="camera; microphone; display-capture; geolocation">
+    </iframe>
   </div>
+
+  <script>
+    // Escuchar mensajes del iframe (Google Apps Script).
+    // Cuando la app detecta una nueva version, le pide a esta pagina que recargue todo.
+    window.addEventListener('message', function(event) {
+      // Solo aceptar mensajes de Google
+      if (event.origin && event.origin.includes('google.com')) {
+        if (event.data && event.data.action === 'force_reload') {
+          // Recargar la pagina completa de GitHub Pages (limpia todo: iframe + PWA cache)
+          window.location.reload(true);
+        }
+      }
+    });
+  </script>
 </body>
 </html>
