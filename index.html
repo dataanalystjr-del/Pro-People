@@ -11,28 +11,52 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1a56db">
 
-  <!-- Redirigir automaticamente despues de 1.5s (fallback) -->
-  <meta http-equiv="refresh" content="2; url=https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec">
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body, html {
       height: 100%;
       width: 100%;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #1a56db 0%, #7e3af2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       overflow: hidden;
+      background: #0f172a;
     }
 
-    .splash {
-      text-align: center;
+    /* ── Contenedor del iframe ── */
+    .iframe-wrap {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      overflow: hidden; /* Esconde el banner de Google que queda arriba */
+    }
+
+    #app-frame {
+      border: none;
+      width: 100%;
+      /* Subir el iframe 42px para ocultar el banner de "Report abuse" */
+      height: calc(100% + 42px);
+      margin-top: -42px;
+      display: block;
+    }
+
+    /* ── Splash de carga (visible mientras el iframe no responde) ── */
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a56db 0%, #7e3af2 100%);
       color: white;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      z-index: 999;
+      transition: opacity 0.5s ease;
+      text-align: center;
       padding: 2rem;
-      animation: fadeIn 0.6s ease;
+    }
+
+    #splash.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .logo-wrap {
@@ -46,28 +70,24 @@
       justify-content: center;
       margin: 0 auto 1.5rem;
       border: 1px solid rgba(255,255,255,0.3);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
       animation: float 3s ease-in-out infinite;
+      font-size: 2.5rem;
     }
 
-    .logo-wrap img {
-      width: 62px;
-      height: 62px;
-      object-fit: contain;
-    }
+    .logo-wrap img { width: 62px; height: 62px; object-fit: contain; }
 
-    h1 {
+    #splash h1 {
       font-size: 2rem;
       font-weight: 800;
       letter-spacing: -0.03em;
       margin-bottom: 0.4rem;
     }
 
-    p {
-      font-size: 0.95rem;
-      opacity: 0.8;
+    #splash p {
+      font-size: 0.9rem;
+      opacity: 0.75;
       margin-bottom: 2rem;
-      font-weight: 500;
     }
 
     .loader {
@@ -78,8 +98,7 @@
     }
 
     .loader span {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       background: rgba(255,255,255,0.8);
       border-radius: 50%;
       animation: bounce 1.2s ease-in-out infinite;
@@ -88,8 +107,9 @@
     .loader span:nth-child(2) { animation-delay: 0.2s; }
     .loader span:nth-child(3) { animation-delay: 0.4s; }
 
-    .btn-open {
-      display: inline-block;
+    /* Botón de fallback manual (visible solo si falla) */
+    #btn-fallback {
+      display: none;
       background: white;
       color: #1a56db;
       padding: 0.8rem 2rem;
@@ -97,18 +117,9 @@
       font-weight: 700;
       font-size: 0.9rem;
       text-decoration: none;
+      border: none;
+      cursor: pointer;
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .btn-open:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes float {
@@ -123,30 +134,97 @@
   </style>
 </head>
 <body>
-  <div class="splash">
-    <div class="logo-wrap">
-      <img src="icono.png" alt="PRO PEOPLE" onerror="this.style.display='none';this.parentElement.innerHTML='&#128101;';">
-    </div>
 
+  <!-- Pantalla de carga (desaparece cuando el iframe confirma que cargó) -->
+  <div id="splash">
+    <div class="logo-wrap">
+      <img src="icono.png" alt="PRO PEOPLE"
+           onerror="this.style.display='none';this.parentElement.textContent='👥';">
+    </div>
     <h1>PRO PEOPLE</h1>
     <p>Plataforma de Gestion de Talento Humano</p>
-
     <div class="loader">
-      <span></span>
-      <span></span>
-      <span></span>
+      <span></span><span></span><span></span>
     </div>
+    <!-- Aparece solo si el iframe falla tras 10s -->
+    <button id="btn-fallback" onclick="goToApp()">Abrir Aplicacion &rarr;</button>
+  </div>
 
-    <a class="btn-open"
-       href="https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec">
-      Abrir Aplicacion
-    </a>
+  <!-- Iframe principal: margin-top negativo oculta el banner de Google -->
+  <div class="iframe-wrap">
+    <iframe
+      id="app-frame"
+      src="https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec"
+      allow="camera; microphone; display-capture; geolocation"
+      loading="eager">
+    </iframe>
   </div>
 
   <script>
-    // Redireccion automatica por JS (mas rapida que el meta refresh)
     const APP_URL = 'https://script.google.com/macros/s/AKfycbw2sLyW8VL3SxYHzh490K6uIDTnKHx-9eaFaAvPPh1XrIrLRop1b_TAQLjPEF_r11eO/exec';
-    setTimeout(function() { window.location.replace(APP_URL); }, 1500);
+    const splash  = document.getElementById('splash');
+    const btnFb   = document.getElementById('btn-fallback');
+    let   appReady = false;
+
+    function hideSplash() {
+      appReady = true;
+      splash.classList.add('hidden');
+      setTimeout(() => { splash.style.display = 'none'; }, 600);
+    }
+
+    function goToApp() {
+      window.location.replace(APP_URL);
+    }
+
+    // ── CAPA 1: La propia app confirma que cargó (postMessage desde JS.html) ──
+    window.addEventListener('message', function(e) {
+      if (e.origin && e.origin.includes('google.com')) {
+        if (e.data && (e.data.action === 'app_loaded' || e.data.action === 'force_reload')) {
+          if (e.data.action === 'force_reload') {
+            window.location.reload(true);
+          } else {
+            hideSplash();
+          }
+        }
+      }
+    });
+
+    // ── CAPA 2: El iframe dispara onload (carga el DOM, incluso si es pagina de error) ──
+    document.getElementById('app-frame').addEventListener('load', function() {
+      // Damos 1s extra para que JS.html envie el postMessage
+      setTimeout(function() {
+        if (!appReady) {
+          // Onload se disparo pero no llego postMessage -> puede ser la pagina de error de Google
+          // Intentamos detectar si hay contenido util en el iframe
+          try {
+            // Si podemos leer el titulo, es cross-origin (GAS cargado = buena senal)
+            // Si lanza SecurityError, el iframe cargo algo del mismo origen (error local)
+            const t = document.getElementById('app-frame').contentDocument;
+            // Si llego aqui sin error, es same-origin (raro) -> redirigir
+            goToApp();
+          } catch(secErr) {
+            // SecurityError = iframe cargo contenido cross-origin = GAS cargo correctamente
+            hideSplash();
+          }
+        }
+      }, 1000);
+    });
+
+    // ── CAPA 3: Timeout total de 12 segundos ──
+    // Si nada funciono, mostramos el boton de fallback
+    setTimeout(function() {
+      if (!appReady) {
+        btnFb.style.display = 'inline-block';
+      }
+    }, 12000);
+
+    // ── CAPA 4: Fallback definitivo a los 20 segundos ──
+    // Si el usuario no hizo clic tampoco, redirigimos automaticamente
+    setTimeout(function() {
+      if (!appReady) {
+        goToApp();
+      }
+    }, 20000);
   </script>
 </body>
 </html>
